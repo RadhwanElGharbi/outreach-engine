@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Outreach Engine</title>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --surface: #111113;
+    --border: #1e1e22;
+    --text: #c8c8c8;
+    --text-dim: #666670;
+    --accent: #8b0000;
+    --accent2: #00b8ff;
+    --danger: #ff4060;
+    --success: #00c878;
+    --warn: #ffa500;
+    --mono: Consolas, 'SF Mono', 'Fira Code', 'Courier New', monospace;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: var(--mono); font-size: 13px; background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 32px; }
+
+  .header { display: flex; align-items: center; gap: 12px; margin-bottom: 0; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .header-logo { font-size: 11px; font-weight: 700; letter-spacing: 3px; color: var(--accent); }
+  .header-title { font-size: 10px; font-weight: 400; letter-spacing: 2px; color: var(--text-dim); text-transform: uppercase; }
+  .header-status { margin-left: auto; font-size: 11px; }
+  .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; }
+  .status-dot.ok { background: var(--success); }
+  .status-dot.warn { background: var(--warn); }
+  .status-dot.off { background: var(--danger); }
+
+  /* Tabs */
+  .tab-bar { display: flex; gap: 0; margin-bottom: 28px; border-bottom: 1px solid var(--border); }
+  .tab { padding: 12px 24px; font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--text-dim); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .section { margin-bottom: 24px; }
+  .section-label { font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--accent); text-transform: uppercase; margin-bottom: 10px; }
+
+  .upload-zone { border: 1px dashed var(--border); border-radius: 4px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; position: relative; }
+  .upload-zone:hover { border-color: var(--accent); background: rgba(139,0,0,0.05); }
+  .upload-zone.has-file { border-style: solid; border-color: var(--success); }
+  .upload-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .upload-text { font-size: 12px; color: var(--text-dim); }
+  .upload-text strong { color: var(--text); }
+  .file-info { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
+  .file-info .count { font-size: 18px; font-weight: 300; color: var(--accent2); }
+  .file-info .detail { font-size: 11px; color: var(--text-dim); }
+
+  textarea { width: 100%; min-height: 200px; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 12px; color: var(--text); font-family: var(--mono); font-size: 11px; line-height: 1.6; resize: vertical; caret-color: var(--accent2); }
+  textarea:focus { outline: none; border-color: var(--accent); }
+
+  .controls { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  .control-group { display: flex; flex-direction: column; gap: 4px; }
+  .control-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+  .control-input { background: var(--surface); border: 1px solid var(--border); border-radius: 2px; padding: 6px 10px; color: var(--text); font-family: var(--mono); font-size: 12px; width: 100px; }
+  .control-input:focus { outline: none; border-color: var(--accent2); }
+  select.control-input { width: 160px; cursor: pointer; }
+
+  .btn-row { display: flex; gap: 12px; margin-top: 8px; }
+  .btn { padding: 10px 24px; border: 1px solid var(--accent); color: var(--accent); background: transparent; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.15s; }
+  .btn:hover { background: var(--accent); color: var(--bg); }
+  .btn:disabled { opacity: 0.3; cursor: not-allowed; pointer-events: none; }
+  .btn-send { border-color: var(--success); color: var(--success); }
+  .btn-send:hover { background: var(--success); color: var(--bg); }
+  .btn-stop { border-color: var(--danger); color: var(--danger); }
+  .btn-stop:hover { background: var(--danger); color: var(--bg); }
+  .btn-sm { padding: 5px 12px; font-size: 9px; letter-spacing: 1px; }
+  .btn-edit { border-color: var(--accent2); color: var(--accent2); }
+  .btn-edit:hover { background: var(--accent2); color: var(--bg); }
+
+  .progress-section { display: none; }
+  .progress-section.active { display: block; }
+  .progress-bar-track { width: 100%; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 8px; }
+  .progress-bar-fill { height: 100%; background: var(--accent); transition: width 0.3s; width: 0%; }
+  .progress-info { display: flex; justify-content: space-between; font-size: 11px; }
+  .progress-current { color: var(--text-dim); }
+  .progress-stats { display: flex; gap: 16px; }
+  .stat { color: var(--text-dim); }
+  .stat b { color: var(--text); }
+  .stat.sent b { color: var(--success); }
+  .stat.failed b { color: var(--danger); }
+
+  .results { margin-top: 16px; }
+  .email-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 14px; margin-bottom: 10px; transition: border-color 0.15s; }
+  .email-card:hover { border-color: #2a2a30; }
+  .email-card.sent-card { border-color: rgba(0,200,120,0.3); }
+  .email-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .email-card-company { font-size: 12px; font-weight: 700; color: var(--text); }
+  .email-card-to { font-size: 10px; color: var(--text-dim); }
+  .email-card-subject { font-size: 11px; color: var(--accent2); margin-bottom: 8px; }
+  .email-card-body { font-size: 11px; color: var(--text-dim); line-height: 1.6; white-space: pre-wrap; border-top: 1px solid var(--border); padding-top: 8px; }
+  .email-card-actions { display: flex; gap: 8px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .email-card-status { font-size: 10px; padding: 2px 8px; border-radius: 2px; font-weight: 700; letter-spacing: 0.5px; }
+  .email-card-status.sent { background: rgba(0,200,120,0.15); color: var(--success); }
+  .email-card-status.failed { background: rgba(255,64,96,0.15); color: var(--danger); }
+  .email-card-status.preview { background: rgba(0,184,255,0.15); color: var(--accent2); }
+  .email-card-status.sending { background: rgba(139,0,0,0.2); color: var(--accent); }
+  .email-card-status.regenerating { background: rgba(255,165,0,0.15); color: var(--warn); }
+
+  .edit-subject { width: 100%; background: var(--bg); border: 1px solid var(--accent2); border-radius: 2px; padding: 6px 8px; color: var(--accent2); font-family: var(--mono); font-size: 11px; margin-bottom: 8px; }
+  .edit-subject:focus { outline: none; }
+  .edit-body { width: 100%; min-height: 120px; background: var(--bg); border: 1px solid var(--border); border-radius: 2px; padding: 8px; color: var(--text-dim); font-family: var(--mono); font-size: 11px; line-height: 1.6; resize: vertical; }
+  .edit-body:focus { outline: none; border-color: var(--accent2); }
+
+  .attach-zone { border: 1px dashed var(--border); border-radius: 4px; padding: 14px; text-align: center; cursor: pointer; transition: border-color 0.15s; position: relative; }
+  .attach-zone:hover { border-color: var(--accent2); }
+  .attach-zone input[type="file"] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+  .attach-list { margin-top: 8px; }
+  .attach-item { display: flex; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: 2px; padding: 6px 10px; margin-bottom: 4px; font-size: 11px; }
+  .attach-item .name { color: var(--text); }
+  .attach-item .size { color: var(--text-dim); font-size: 10px; }
+  .attach-remove { background: none; border: none; color: var(--danger); cursor: pointer; font-family: var(--mono); font-size: 12px; padding: 2px 6px; }
+  .attach-remove:hover { color: #fff; }
+
+  .preset-bar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; }
+  .preset-select { width: 240px !important; }
+
+  /* Funnel */
+  .funnel { display: flex; gap: 0; align-items: stretch; height: 70px; }
+  .funnel-stage { display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; text-align: center; padding: 8px 16px; flex-shrink: 0; }
+  .funnel-stage:not(:last-child)::after { content: '\u2192'; position: absolute; right: -10px; font-size: 14px; color: var(--text-dim); z-index: 1; }
+  .funnel-value { font-size: 20px; font-weight: 300; margin-bottom: 2px; }
+  .funnel-label { font-size: 8px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.5px; }
+  .funnel-pct { font-size: 9px; font-weight: 700; margin-top: 2px; }
+
+  /* ===== Leads Table ===== */
+  .leads-table-wrap { max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: 4px; margin-top: 10px; }
+  .leads-table { width: 100%; border-collapse: collapse; }
+  .leads-table th { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); background: var(--surface); position: sticky; top: 0; z-index: 1; cursor: pointer; user-select: none; white-space: nowrap; }
+  .leads-table th:hover { color: var(--text); }
+  .leads-table th .sort-arrow { font-size: 8px; margin-left: 3px; color: var(--accent2); }
+  .leads-table td { font-size: 11px; padding: 5px 8px; border-bottom: 1px solid rgba(30,30,34,0.3); color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+  .leads-table tr:hover td { color: var(--text); background: rgba(139,0,0,0.04); }
+  .leads-table tr.unchecked td { opacity: 0.35; }
+  .leads-table input[type="checkbox"] { accent-color: var(--accent); cursor: pointer; }
+  .leads-toolbar { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  .leads-toolbar .search-input { background: var(--surface); border: 1px solid var(--border); border-radius: 2px; padding: 5px 10px; color: var(--text); font-family: var(--mono); font-size: 11px; width: 220px; }
+  .leads-toolbar .search-input:focus { outline: none; border-color: var(--accent2); }
+  .leads-toolbar .lead-count { font-size: 10px; color: var(--text-dim); margin-left: auto; }
+
+  .empty-state { text-align: center; padding: 40px; color: var(--text-dim); font-size: 12px; }
+  @keyframes pulse { 0%,100%{opacity:0.4;} 50%{opacity:1;} }
+  .pulsing { animation: pulse 1.5s infinite; }
+
+  /* ===== Analytics ===== */
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 24px; }
+  .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px; text-align: center; }
+  .kpi-value { font-size: 28px; font-weight: 300; margin-bottom: 4px; }
+  .kpi-value.green { color: var(--success); }
+  .kpi-value.red { color: var(--danger); }
+  .kpi-value.blue { color: var(--accent2); }
+  .kpi-value.white { color: var(--text); }
+  .kpi-label { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; }
+
+  .chart-container { margin-bottom: 24px; }
+  .bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 120px; padding: 0 4px; border-bottom: 1px solid var(--border); }
+  .bar-group { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 0; }
+  .bar-stack { display: flex; flex-direction: column-reverse; width: 100%; gap: 1px; }
+  .bar { width: 100%; border-radius: 1px 1px 0 0; min-height: 0; transition: height 0.3s; }
+  .bar.sent { background: var(--success); }
+  .bar.failed { background: var(--danger); }
+  .bar-label { font-size: 8px; color: var(--text-dim); margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+  .bar-count { font-size: 8px; color: var(--text-dim); }
+
+  .log-table { width: 100%; border-collapse: collapse; }
+  .log-table th { font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
+  .log-table td { font-size: 11px; padding: 6px 8px; border-bottom: 1px solid rgba(30,30,34,0.5); color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 200px; }
+  .log-table tr:hover td { color: var(--text); }
+  .log-status { font-size: 9px; padding: 1px 6px; border-radius: 2px; font-weight: 700; }
+  .log-status.sent { background: rgba(0,200,120,0.15); color: var(--success); }
+  .log-status.failed { background: rgba(255,64,96,0.15); color: var(--danger); }
+
+  .company-list { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .company-row { display: flex; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 2px; padding: 8px 12px; font-size: 11px; }
+  .company-row .name { color: var(--text); font-weight: 400; }
+  .company-row .stats { display: flex; gap: 10px; font-size: 10px; }
+
+  /* Schedule */
+  .btn-schedule { border-color: var(--warn); color: var(--warn); }
+  .btn-schedule:hover { background: var(--warn); color: var(--bg); }
+  .email-card-status.scheduled { background: rgba(255,165,0,0.15); color: var(--warn); }
+  .schedule-hint { font-size: 10px; color: var(--text-dim); margin-top: 6px; padding: 6px 8px; background: rgba(255,165,0,0.05); border: 1px solid rgba(255,165,0,0.12); border-radius: 2px; }
+  .schedule-hint strong { color: var(--warn); font-weight: 700; }
+  .schedule-picker { display: flex; gap: 8px; align-items: center; margin-top: 8px; padding: 8px; background: var(--bg); border: 1px solid var(--warn); border-radius: 2px; }
+  .schedule-picker input[type="datetime-local"] { background: var(--surface); border: 1px solid var(--border); border-radius: 2px; padding: 5px 8px; color: var(--text); font-family: var(--mono); font-size: 11px; }
+  .schedule-picker input[type="datetime-local"]:focus { outline: none; border-color: var(--warn); }
+  .sched-kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 24px; }
+  .log-status.pending { background: rgba(255,165,0,0.15); color: var(--warn); }
+  .log-status.cancelled { background: rgba(102,102,112,0.15); color: var(--text-dim); }
+  .log-status.scheduled { background: rgba(255,165,0,0.15); color: var(--warn); }
+  .countdown { font-size: 10px; color: var(--warn); font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-logo">OUTREACH</div>
+    <div class="header-title">Outreach Engine</div>
+    <div class="header-status" id="auth-status"></div>
+  </div>
+
+  <!-- Tab Bar -->
+  <div class="tab-bar">
+    <div class="tab active" onclick="switchTab('outreach')">Outreach</div>
+    <div class="tab" onclick="switchTab('leads')">Find Leads</div>
+    <div class="tab" onclick="switchTab('scheduled')">Scheduled</div>
+    <div class="tab" onclick="switchTab('analytics')">Analytics</div>
+    <div class="tab" onclick="switchTab('settings')">Settings</div>
+  </div>
+
+  <!-- ==================== OUTREACH TAB ==================== -->
+  <div class="tab-content active" id="tab-outreach">
+
+    <div class="section">
+      <div class="section-label">1 / Leads List</div>
+      <div class="upload-zone" id="upload-zone">
+        <input type="file" accept=".csv" id="csv-input">
+        <div class="upload-text" id="upload-text"><strong>Drop CSV here</strong> or click to browse<br><span style="font-size:10px;color:var(--text-dim);">Requires: email, company_name, website columns</span></div>
+      </div>
+      <div id="leads-panel" style="display:none;">
+        <div class="leads-toolbar">
+          <input type="text" class="search-input" id="leads-search" placeholder="Search leads...">
+          <button class="btn btn-sm" onclick="toggleAllLeads(true)">Select All</button>
+          <button class="btn btn-sm" onclick="toggleAllLeads(false)">Deselect All</button>
+          <div class="lead-count" id="leads-selected-count"></div>
+        </div>
+        <div class="leads-table-wrap">
+          <table class="leads-table">
+            <thead id="leads-thead"></thead>
+            <tbody id="leads-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">2 / Attachments</div>
+      <div class="attach-zone"><input type="file" id="attach-input" multiple><div class="upload-text"><strong>Attach files</strong> (brochure, one-pager, etc.)</div></div>
+      <div class="attach-list" id="attach-list"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">3 / Email Instructions</div>
+      <div class="preset-bar">
+        <select class="control-input preset-select" id="preset-select"><option value="">-- Saved presets --</option></select>
+        <button class="btn btn-sm" onclick="savePreset()">Save</button>
+        <button class="btn btn-sm btn-stop" onclick="deletePreset()" id="btn-delete-preset" style="display:none;">Delete</button>
+      </div>
+      <textarea id="instructions" placeholder="Enter instructions for how emails should be written..."></textarea>
+    </div>
+
+    <div class="section">
+      <div class="section-label">4 / Settings</div>
+      <div class="controls">
+        <div class="control-group"><div class="control-label">Batch Size</div><input type="number" class="control-input" id="batch-size" value="10" min="1" max="500"></div>
+        <div class="control-group"><div class="control-label">Delay (sec)</div><input type="number" class="control-input" id="delay" value="15" min="1" max="120"></div>
+        <div class="control-group"><div class="control-label">Vertical Filter</div><select class="control-input" id="vertical-filter"><option value="">All verticals</option></select></div>
+        <div class="control-group"><div class="control-label">Max Score</div><input type="number" class="control-input" id="max-score" value="10" min="1" max="10"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="btn-row">
+        <button class="btn" id="btn-preview" disabled>Preview Emails</button>
+        <button class="btn btn-send" id="btn-send" disabled>Send All</button>
+        <button class="btn btn-schedule" id="btn-schedule-all" disabled onclick="scheduleAll()">Schedule All</button>
+        <button class="btn btn-stop" id="btn-stop" style="display:none;">Stop</button>
+      </div>
+    </div>
+
+    <div class="section progress-section" id="progress-section">
+      <div class="section-label">Progress</div>
+      <div class="progress-bar-track"><div class="progress-bar-fill" id="progress-fill"></div></div>
+      <div class="progress-info">
+        <div class="progress-current" id="progress-current">Idle</div>
+        <div class="progress-stats">
+          <div class="stat sent">Sent: <b id="stat-sent">0</b></div>
+          <div class="stat failed">Failed: <b id="stat-failed">0</b></div>
+          <div class="stat">Skipped: <b id="stat-skipped">0</b></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Results</div>
+      <div class="results" id="results"><div class="empty-state">Upload a CSV and click Preview to see generated emails</div></div>
+    </div>
+  </div>
+
+  <!-- ==================== FIND LEADS TAB ==================== -->
+  <div class="tab-content" id="tab-leads">
+    <div class="section">
+      <div class="section-label">1 / Add Company Domains</div>
+      <textarea id="lead-domains" style="min-height:120px;" placeholder="Enter company domains, one per line:&#10;&#10;txdroneco.com&#10;flyhighsurvey.com&#10;adventureuav.com"></textarea>
+      <div style="font-size:10px; color:var(--text-dim); margin-top:6px;">Or upload a CSV with a "domain" column</div>
+      <div style="margin-top:8px; position:relative; display:inline-block;">
+        <input type="file" accept=".csv" id="lead-csv-input" style="position:absolute;inset:0;opacity:0;cursor:pointer;">
+        <button class="btn btn-sm">Upload CSV</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">2 / Find Decision Makers</div>
+      <div class="btn-row">
+        <button class="btn" id="btn-find-leads" onclick="findLeads()">Search Hunter.io</button>
+      </div>
+      <div style="font-size:10px; color:var(--text-dim); margin-top:6px;">Searches each domain for emails, picks the best decision-maker (Owner, CEO, VP Ops, Director)</div>
+    </div>
+
+    <div class="section" id="lead-results-section" style="display:none;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="section-label" style="margin-bottom:0;">Results</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm btn-send" onclick="sendLeadsToOutreach()">Send to Outreach</button>
+          <button class="btn btn-sm" onclick="downloadLeadCSV()">Download CSV</button>
+        </div>
+      </div>
+      <div id="lead-results"></div>
+    </div>
+  </div>
+
+  <!-- ==================== SCHEDULED TAB ==================== -->
+  <div class="tab-content" id="tab-scheduled">
+
+    <div class="section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="section-label" style="margin-bottom:0;">Scheduled Emails</div>
+        <button class="btn btn-sm" onclick="loadSchedules()">Refresh</button>
+      </div>
+      <div class="sched-kpi-grid">
+        <div class="kpi-card"><div class="kpi-value" style="color:var(--warn);" id="sched-pending">-</div><div class="kpi-label">Pending</div></div>
+        <div class="kpi-card"><div class="kpi-value green" id="sched-sent">-</div><div class="kpi-label">Sent</div></div>
+        <div class="kpi-card"><div class="kpi-value" style="color:var(--text-dim);" id="sched-cancelled">-</div><div class="kpi-label">Cancelled</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div style="overflow-x:auto;">
+        <table class="log-table" id="schedule-table">
+          <thead><tr><th>Company</th><th>Recipient</th><th>Subject</th><th>Scheduled For</th><th>Status</th><th></th></tr></thead>
+          <tbody id="schedule-body"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="schedule-empty">No scheduled emails. Preview emails in the Outreach tab and click Schedule.</div>
+    </div>
+  </div>
+
+  <!-- ==================== ANALYTICS TAB ==================== -->
+  <div class="tab-content" id="tab-analytics">
+
+    <div class="section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div class="section-label" style="margin-bottom:0;">Overview</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-sm btn-edit" onclick="checkReplies()" id="btn-check-replies">Check Replies</button>
+          <button class="btn btn-sm" onclick="loadAnalytics()">Refresh</button>
+        </div>
+      </div>
+      <div class="kpi-grid" style="grid-template-columns:repeat(6,1fr);">
+        <div class="kpi-card"><div class="kpi-value white" id="kpi-total">-</div><div class="kpi-label">Total Sent</div></div>
+        <div class="kpi-card"><div class="kpi-value green" id="kpi-sent">-</div><div class="kpi-label">Delivered</div></div>
+        <div class="kpi-card"><div class="kpi-value red" id="kpi-failed">-</div><div class="kpi-label">Failed</div></div>
+        <div class="kpi-card"><div class="kpi-value blue" id="kpi-rate">-</div><div class="kpi-label">Delivery Rate</div></div>
+        <div class="kpi-card" style="border-color:rgba(0,200,120,0.3);"><div class="kpi-value green" id="kpi-opened">-</div><div class="kpi-label">Opened</div></div>
+        <div class="kpi-card" style="border-color:rgba(0,184,255,0.3);"><div class="kpi-value blue" id="kpi-replied">-</div><div class="kpi-label">Replied</div></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Engagement Funnel</div>
+      <div class="funnel" id="funnel"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Daily Activity</div>
+      <div class="chart-container">
+        <div class="bar-chart" id="daily-chart"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Email Tracking</div>
+      <div style="overflow-x:auto;">
+        <table class="log-table">
+          <thead><tr><th>Sent</th><th>Recipient</th><th>Company</th><th>Subject</th><th>Opened</th><th>Replied</th></tr></thead>
+          <tbody id="tracking-body"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="tracking-empty" style="display:none;">No tracked emails yet. Send emails to start tracking.</div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Companies Contacted</div>
+      <div class="company-list" id="company-list"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Send Log</div>
+      <div style="overflow-x:auto;">
+        <table class="log-table">
+          <thead><tr><th>Time</th><th>Recipient</th><th>Company</th><th>Subject</th><th>Status</th></tr></thead>
+          <tbody id="log-body"></tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="log-empty" style="display:none;">No emails sent yet</div>
+    </div>
+  </div>
+
+  <!-- ==================== SETTINGS TAB ==================== -->
+  <div class="tab-content" id="tab-settings">
+
+    <div class="section">
+      <div class="section-label">Your Company</div>
+      <div class="controls" style="flex-direction:column;align-items:stretch;gap:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="control-group"><div class="control-label">Your Name</div><input class="control-input" id="set-name" style="width:100%;" placeholder="Jane Smith"></div>
+          <div class="control-group"><div class="control-label">Title</div><input class="control-input" id="set-title" style="width:100%;" placeholder="CEO"></div>
+          <div class="control-group"><div class="control-label">Company Name</div><input class="control-input" id="set-company" style="width:100%;" placeholder="Acme Corp"></div>
+          <div class="control-group"><div class="control-label">Company Website</div><input class="control-input" id="set-website" style="width:100%;" placeholder="acme.com"></div>
+          <div class="control-group"><div class="control-label">Email Address</div><input class="control-input" id="set-email" style="width:100%;" placeholder="jane@acme.com"></div>
+          <div class="control-group"><div class="control-label">Calendly / Meeting Link</div><input class="control-input" id="set-calendly" style="width:100%;" placeholder="https://calendly.com/..."></div>
+          <div class="control-group"><div class="control-label">Location</div><input class="control-input" id="set-location" style="width:100%;" placeholder="San Francisco, CA"></div>
+        </div>
+        <div class="control-group">
+          <div class="control-label">Company Context (what you sell, your value prop, key differentiators)</div>
+          <textarea id="set-context" style="min-height:120px;" placeholder="Describe your company, products, and services. This gets injected into the AI prompt when generating emails."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">AI Model (LLM)</div>
+      <div class="controls">
+        <div class="control-group">
+          <div class="control-label">Provider</div>
+          <select class="control-input" id="set-llm-provider" style="width:200px;">
+            <option value="claude">Claude (Anthropic)</option>
+            <option value="openai">GPT (OpenAI)</option>
+            <option value="gemini">Gemini (Google)</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <div class="control-label">API Key</div>
+          <input class="control-input" id="set-llm-key" type="password" style="width:350px;" placeholder="sk-...">
+        </div>
+        <div class="control-group">
+          <div class="control-label">Model (optional)</div>
+          <input class="control-input" id="set-llm-model" style="width:250px;" placeholder="Auto-select best model">
+        </div>
+        <button class="btn btn-sm btn-edit" onclick="testLLM()">Test Connection</button>
+        <span id="llm-test-result" style="font-size:11px;"></span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Email Provider</div>
+      <div style="font-size:12px;color:var(--text-dim);margin-bottom:12px;line-height:1.7;">
+        <strong style="color:var(--text);">Gmail:</strong> Place <code>credentials.json</code> from Google Cloud Console in the app directory, then run <code>node auth.js</code><br>
+        <strong style="color:var(--text);">Outlook:</strong> Place <code>outlook-credentials.json</code> with your Azure App ID, then run <code>node auth.js outlook</code>
+      </div>
+      <div id="email-provider-status" style="font-size:11px;"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Hunter.io (Lead Enrichment)</div>
+      <div class="controls">
+        <div class="control-group">
+          <div class="control-label">API Key</div>
+          <input class="control-input" id="set-hunter-key" type="password" style="width:350px;" placeholder="Hunter.io API key">
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Rate Limits</div>
+      <div class="controls">
+        <div class="control-group"><div class="control-label">Daily Send Limit</div><input class="control-input" id="set-daily-limit" type="number" value="2000"></div>
+        <div class="control-group"><div class="control-label">Default Delay (ms)</div><input class="control-input" id="set-delay" type="number" value="15000"></div>
+        <div class="control-group"><div class="control-label">Default Batch Size</div><input class="control-input" id="set-batch" type="number" value="50"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-label">Custom Email Instructions</div>
+      <div style="font-size:10px;color:var(--text-dim);margin-bottom:8px;">Override the auto-generated prompt. Leave empty to auto-build from company context above.</div>
+      <textarea id="set-email-instructions" style="min-height:150px;" placeholder="Leave empty to auto-generate from your company context above..."></textarea>
+    </div>
+
+    <div class="section">
+      <div class="btn-row">
+        <button class="btn btn-send" onclick="saveAllSettings()">Save Settings</button>
+        <span id="settings-save-status" style="font-size:11px;margin-left:12px;"></span>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+const API = '';
+let prospects = [];
+let previewResults = [];
+
+// ===== Tab switching =====
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.querySelector(`.tab[onclick="switchTab('${tab}')"]`).classList.add('active');
+  if (tab === 'analytics') loadAnalytics();
+  if (tab === 'settings') loadSettingsUI();
+  if (tab === 'scheduled') loadSchedules();
+}
+
+// ===== Init =====
+async function init() {
+  const auth = await fetch(API + '/api/auth-check').then(r => r.json());
+  const el = document.getElementById('auth-status');
+  if (auth.hasToken) el.innerHTML = '<span class="status-dot ok"></span>' + auth.email;
+  else if (auth.hasCreds) el.innerHTML = '<span class="status-dot warn"></span>Run node auth.js';
+  else el.innerHTML = '<span class="status-dot off"></span>No credentials.json';
+  document.getElementById('instructions').value = await defaultInstructions();
+  loadAttachments();
+  loadPresets();
+}
+
+async function defaultInstructions() {
+  // Load from settings — if user has saved email instructions or company context, use those
+  try {
+    const res = await fetch(API + '/api/settings').then(r => r.json());
+    if (res.emailInstructions) return res.emailInstructions;
+    // Build default from company context
+    const name = res.senderName || 'Your Name';
+    const company = res.companyName || 'Your Company';
+    const website = res.companyWebsite || '';
+    const calendly = res.calendlyLink || '';
+    const location = res.location || '';
+    const context = res.companyContext || 'Describe what your company does, your value proposition, and key products/services.';
+    const firstName = name.split(' ')[0] || 'Best';
+
+    return `You are a cold email ghostwriter for ${name}${res.senderTitle ? ', ' + res.senderTitle : ''} at ${company}${website ? ' (' + website + ')' : ''}${location ? ', based in ' + location : ''}.
+
+${context}
+
+RULES:
+1. 4-6 sentences maximum.
+2. Sentence 1: Reference something SPECIFIC about THEIR company.
+3. Sentence 2: Their specific constraint or pain point.
+4. Sentence 3: What ${company} does \u2014 ONE sentence, lead with outcome.
+5. Sentence 4: The ask \u2014 15 minutes.${calendly ? ' Include: ' + calendly : ''}
+6. Sign off with just "${firstName}"
+
+TONE: Direct, peer-to-peer, founder to operator. No filler.
+NEVER USE: "excited," "thrilled," "game-changer," "cutting-edge," "revolutionary," "I hope this finds you well"
+NEVER START WITH: "I hope" or "My name is"
+SUBJECT LINE: Short (under 8 words), specific, no clickbait. Prefix with "Subject: "
+
+OUTPUT MUST BE PLAIN TEXT. No markdown, no HTML.
+
+OUTPUT FORMAT:
+Subject: [subject line]
+
+[email body]
+${calendly ? '\n' + calendly : ''}
+
+${firstName}`;
+  } catch {
+    return 'Configure your company details in the Settings tab to generate email instructions.';
+  }
+}
+
+// ===== CSV Upload & Leads Table =====
+let leadChecked = []; // parallel boolean array
+let leadSort = { col: null, asc: true };
+const LEAD_COLS = [
+  { key: 'companyName', label: 'Company' },
+  { key: 'contactName', label: 'Contact' },
+  { key: 'email', label: 'Email' },
+  { key: 'contactTitle', label: 'Title' },
+  { key: 'vertical', label: 'Vertical' },
+  { key: 'region', label: 'Region' },
+  { key: 'size', label: 'Size' },
+  { key: 'difficultyScore', label: 'Score' },
+];
+
+document.getElementById('csv-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  const res = await fetch(API + '/api/parse-csv', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ csvText: text, fileName: file.name }) }).then(r => r.json());
+  if (res.success) {
+    prospects = res.prospects;
+    leadChecked = prospects.map(() => true);
+    document.getElementById('upload-zone').classList.add('has-file');
+    document.getElementById('upload-text').innerHTML = '<strong>' + esc(file.name) + '</strong>';
+    const verticals = [...new Set(prospects.map(p => p.vertical).filter(Boolean))];
+    const sel = document.getElementById('vertical-filter');
+    sel.innerHTML = '<option value="">All verticals (' + res.count + ')</option>';
+    verticals.forEach(v => { sel.innerHTML += '<option value="'+esc(v)+'">'+esc(v)+' ('+prospects.filter(p=>p.vertical===v).length+')</option>'; });
+    document.getElementById('btn-preview').disabled = false;
+    document.getElementById('btn-send').disabled = false;
+    document.getElementById('btn-schedule-all').disabled = false;
+    document.getElementById('results').innerHTML = '<div class="empty-state">'+res.count+' leads loaded. Click Preview to generate emails.</div>';
+    document.getElementById('leads-panel').style.display = 'block';
+    renderLeadsTable();
+  } else { alert('Error: ' + res.error); }
+});
+
+document.getElementById('leads-search').addEventListener('input', () => renderLeadsTable());
+
+function getLeadSortedIndices() {
+  const indices = prospects.map((_, i) => i);
+  const search = (document.getElementById('leads-search')?.value || '').toLowerCase();
+  const filtered = search
+    ? indices.filter(i => {
+        const p = prospects[i];
+        return (p.companyName||'').toLowerCase().includes(search)
+          || (p.contactName||'').toLowerCase().includes(search)
+          || (p.email||'').toLowerCase().includes(search)
+          || (p.vertical||'').toLowerCase().includes(search)
+          || (p.region||'').toLowerCase().includes(search)
+          || (p.contactTitle||'').toLowerCase().includes(search);
+      })
+    : indices;
+  if (leadSort.col) {
+    filtered.sort((a, b) => {
+      let va = prospects[a][leadSort.col] || '', vb = prospects[b][leadSort.col] || '';
+      if (leadSort.col === 'difficultyScore') { va = Number(va) || 0; vb = Number(vb) || 0; }
+      else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+      if (va < vb) return leadSort.asc ? -1 : 1;
+      if (va > vb) return leadSort.asc ? 1 : -1;
+      return 0;
+    });
+  }
+  return filtered;
+}
+
+function renderLeadsTable() {
+  const thead = document.getElementById('leads-thead');
+  const tbody = document.getElementById('leads-tbody');
+  const indices = getLeadSortedIndices();
+  const checkedCount = leadChecked.filter(Boolean).length;
+  const allVisible = indices.length > 0 && indices.every(i => leadChecked[i]);
+
+  thead.innerHTML = '<tr><th><input type="checkbox" ' + (allVisible ? 'checked' : '') + ' onchange="toggleVisibleLeads(this.checked)"></th>' +
+    LEAD_COLS.map(c => {
+      const arrow = leadSort.col === c.key ? (leadSort.asc ? ' \u25B2' : ' \u25BC') : '';
+      return `<th onclick="sortLeads('${c.key}')">${c.label}<span class="sort-arrow">${arrow}</span></th>`;
+    }).join('') + '</tr>';
+
+  tbody.innerHTML = indices.map(i => {
+    const p = prospects[i];
+    const checked = leadChecked[i];
+    const cls = checked ? '' : 'unchecked';
+    const region = p.region || [p.city, p.state, p.country].filter(Boolean).join(', ');
+    return `<tr class="${cls}">
+      <td><input type="checkbox" ${checked ? 'checked' : ''} onchange="toggleLead(${i}, this.checked)"></td>
+      <td title="${escAttr(p.companyName)}">${esc(p.companyName)}</td>
+      <td title="${escAttr(p.contactName)}">${esc(p.contactName)}</td>
+      <td title="${escAttr(p.email)}">${esc(p.email)}</td>
+      <td title="${escAttr(p.contactTitle)}">${esc(p.contactTitle)}</td>
+      <td>${esc(p.vertical)}</td>
+      <td title="${escAttr(region)}">${esc(region)}</td>
+      <td>${esc(p.size)}</td>
+      <td>${p.difficultyScore || '-'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('leads-selected-count').textContent = checkedCount + ' / ' + prospects.length + ' selected';
+}
+
+function sortLeads(col) {
+  if (leadSort.col === col) leadSort.asc = !leadSort.asc;
+  else { leadSort.col = col; leadSort.asc = true; }
+  renderLeadsTable();
+}
+
+function toggleLead(i, val) { leadChecked[i] = val; renderLeadsTable(); }
+
+function toggleAllLeads(val) { leadChecked = leadChecked.map(() => val); renderLeadsTable(); }
+
+function toggleVisibleLeads(val) {
+  const indices = getLeadSortedIndices();
+  indices.forEach(i => { leadChecked[i] = val; });
+  renderLeadsTable();
+}
+
+// ===== Attachments =====
+document.getElementById('attach-input').addEventListener('change', async (e) => {
+  for (const file of e.target.files) {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      const base64 = reader.result.split(',')[1];
+      await fetch(API + '/api/upload-attachment', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ fileName: file.name, mimeType: file.type || 'application/octet-stream', base64Data: base64 }) });
+      loadAttachments();
+    };
+    reader.readAsDataURL(file);
+  }
+  e.target.value = '';
+});
+async function loadAttachments() {
+  const res = await fetch(API + '/api/attachments').then(r => r.json());
+  const list = document.getElementById('attach-list');
+  if (res.count === 0) { list.innerHTML = ''; return; }
+  list.innerHTML = res.files.map((f, i) => `<div class="attach-item"><span class="name">${esc(f.fileName)}</span><span class="size">${f.size}</span><button class="attach-remove" onclick="removeAttachment(${i})">\u00d7</button></div>`).join('');
+}
+async function removeAttachment(index) {
+  await fetch(API + '/api/remove-attachment', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ index }) });
+  loadAttachments();
+}
+
+// ===== Filters =====
+function getFilteredProspects() {
+  let filtered = prospects.filter((_, i) => leadChecked[i]);
+  const v = document.getElementById('vertical-filter').value;
+  const ms = parseInt(document.getElementById('max-score').value) || 10;
+  if (v) filtered = filtered.filter(p => (p.vertical||'').includes(v) || (p.tags||'').includes(v));
+  filtered = filtered.filter(p => !p.difficultyScore || p.difficultyScore <= ms);
+  return filtered;
+}
+
+// ===== Preview =====
+let previewAbort = false;
+document.getElementById('btn-preview').addEventListener('click', async () => {
+  const btn = document.getElementById('btn-preview');
+  const stopBtn = document.getElementById('btn-stop');
+  btn.disabled = true; btn.textContent = 'Generating...';
+  previewAbort = false;
+  stopBtn.style.display = 'inline-block';
+  stopBtn.disabled = false; stopBtn.textContent = 'Stop';
+  const filtered = getFilteredProspects();
+  const batchSize = parseInt(document.getElementById('batch-size').value) || 10;
+  const instructions = document.getElementById('instructions').value;
+  const batch = filtered.slice(0, batchSize);
+  const total = batch.length;
+
+  previewResults = [];
+  const resultsEl = document.getElementById('results');
+  const progressSection = document.getElementById('progress-section');
+  progressSection.classList.add('active');
+  document.getElementById('progress-fill').style.width = '0%';
+  document.getElementById('progress-fill').style.background = 'var(--accent)';
+  document.getElementById('progress-current').textContent = 'Generating 0/' + total + '...';
+  document.getElementById('stat-sent').textContent = '0';
+  document.getElementById('stat-failed').textContent = '0';
+  document.getElementById('stat-skipped').textContent = '0';
+  resultsEl.innerHTML = '';
+
+  let done = 0, failed = 0;
+  for (let i = 0; i < total; i++) {
+    if (previewAbort) break;
+    const prospect = batch[i];
+    document.getElementById('progress-current').textContent = `Generating ${i+1}/${total} \u2014 ${prospect.companyName}`;
+    try {
+      const res = await fetch(API + '/api/preview-one', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ prospect, instructions })
+      }).then(r => r.json());
+      if (res.success) {
+        previewResults.push({ prospect, email: res.email, suggestedTime: res.suggestedTime, scraped: res.scraped });
+        done++;
+      } else {
+        previewResults.push({ prospect, email: { subject: 'Error', body: res.error || 'Generation failed', error: res.error }, suggestedTime: null });
+        failed++;
+      }
+    } catch (err) {
+      previewResults.push({ prospect, email: { subject: 'Error', body: err.message, error: err.message }, suggestedTime: null });
+      failed++;
+    }
+    // Update progress and render the new card
+    const pct = Math.round(((i + 1) / total) * 100);
+    document.getElementById('progress-fill').style.width = pct + '%';
+    document.getElementById('stat-sent').textContent = done;
+    document.getElementById('stat-failed').textContent = failed;
+    renderPreviews();
+  }
+  const label = previewAbort ? 'Stopped' : 'Done';
+  document.getElementById('progress-current').textContent = `${label} \u2014 ${done} generated, ${failed} failed`;
+  document.getElementById('progress-fill').style.background = 'var(--success)';
+  btn.disabled = false; btn.textContent = 'Preview Emails';
+  stopBtn.style.display = 'none';
+});
+
+function renderPreviews() {
+  const el = document.getElementById('results'); el.innerHTML = '';
+  previewResults.forEach((r, i) => { el.innerHTML += emailCard(i, r.prospect, r.email, r.status || 'preview'); });
+}
+
+// ===== Email Card =====
+function emailCard(index, prospect, email, status) {
+  const cls = status === 'sent' ? 'sent-card' : status === 'scheduled' ? '' : '';
+  const statusLabel = status === 'sent' ? 'SENT' : status === 'failed' ? 'FAILED' : status === 'sending' ? 'SENDING...' : status === 'regenerating' ? 'REGENERATING...' : status === 'scheduled' ? 'SCHEDULED' : 'PREVIEW';
+  const isEditing = previewResults[index]?.editing;
+  const isScheduling = previewResults[index]?.scheduling;
+  const done = status === 'sent' || status === 'sending' || status === 'scheduled';
+  let subjectHtml, bodyHtml, actionsHtml, scheduleHtml = '';
+
+  // Suggested time hint
+  const st = previewResults[index]?.suggestedTime;
+  if (st && !done && !isEditing && !isScheduling) {
+    scheduleHtml = `<div class="schedule-hint">Suggested send: <strong>${esc(st.localTime)}</strong> &mdash; ${esc(st.reasoning)}</div>`;
+  }
+
+  if (isScheduling) {
+    const st2 = previewResults[index]?.suggestedTime;
+    const defaultVal = st2 ? toLocalInput(st2.suggestedUTC) : '';
+    scheduleHtml = `<div class="schedule-picker">
+      <input type="datetime-local" id="sched-time-${index}" value="${defaultVal}">
+      <button class="btn btn-sm btn-schedule" onclick="confirmSchedule(${index})">Confirm</button>
+      <button class="btn btn-sm" onclick="cancelScheduling(${index})">Cancel</button>
+      ${st2 ? `<span style="font-size:9px;color:var(--text-dim);">${esc(st2.reasoning)}</span>` : ''}
+    </div>`;
+  }
+
+  if (isEditing) {
+    subjectHtml = `<input class="edit-subject" id="edit-subj-${index}" value="${escAttr(email.subject)}">`;
+    bodyHtml = `<textarea class="edit-body" id="edit-body-${index}">${esc(email.body)}</textarea>`;
+    actionsHtml = `<div class="email-card-actions"><button class="btn btn-sm btn-send" onclick="saveEdit(${index})">Save</button><button class="btn btn-sm" onclick="cancelEdit(${index})">Cancel</button></div>`;
+  } else {
+    subjectHtml = `<div class="email-card-subject">Subject: ${esc(email.subject)}</div>`;
+    bodyHtml = `<div class="email-card-body">${esc(email.body)}</div>`;
+    const dis = done ? 'disabled' : '';
+    actionsHtml = `<div class="email-card-actions">
+      <button class="btn btn-sm btn-send" onclick="sendOne(${index})" ${dis}>${status==='sent'?'Sent':'Send'}</button>
+      <button class="btn btn-sm btn-schedule" onclick="startScheduling(${index})" ${dis}>Schedule</button>
+      <button class="btn btn-sm btn-edit" onclick="startEdit(${index})" ${done?'disabled':''}>Edit</button>
+      <button class="btn btn-sm" onclick="regenerateOne(${index})" ${done?'disabled':''}>Regenerate</button>
+    </div>`;
+  }
+  return `<div class="email-card ${cls}" id="card-${index}"><div class="email-card-header"><div><div class="email-card-company">${esc(prospect.companyName)}</div><div class="email-card-to">${esc(prospect.contactName)} &lt;${esc(prospect.email)}&gt; \u2014 ${esc(prospect.vertical)}</div></div><div class="email-card-status ${status}">${statusLabel}</div></div>${subjectHtml}${bodyHtml}${email.error?'<div style="color:var(--danger);font-size:10px;margin-top:6px;">Error: '+esc(email.error)+'</div>':''}${scheduleHtml}${actionsHtml}</div>`;
+}
+
+function startEdit(i) { previewResults[i].editing = true; renderPreviews(); document.getElementById('edit-body-'+i)?.focus(); }
+function cancelEdit(i) { previewResults[i].editing = false; renderPreviews(); }
+function saveEdit(i) { previewResults[i].email.subject = document.getElementById('edit-subj-'+i).value; previewResults[i].email.body = document.getElementById('edit-body-'+i).value; previewResults[i].editing = false; renderPreviews(); }
+
+async function regenerateOne(i) {
+  const r = previewResults[i];
+  const oldStatus = r.status;
+  r.status = 'regenerating'; r.email.subject = 'Regenerating...'; r.email.body = ''; renderPreviews();
+  const instructions = document.getElementById('instructions').value;
+  const res = await fetch(API+'/api/preview-one', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ prospect: r.prospect, instructions }) }).then(r=>r.json());
+  if (res.success) { r.email = res.email; r.suggestedTime = res.suggestedTime; r.status = 'preview'; }
+  else { r.email = { subject: 'Error', body: res.error || 'Failed to regenerate', error: res.error }; r.status = 'preview'; }
+  renderPreviews();
+}
+
+async function sendOne(i) {
+  const r = previewResults[i]; r.status = 'sending'; renderPreviews();
+  const res = await fetch(API+'/api/send-one', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({to:r.prospect.email,subject:r.email.subject,body:r.email.body,company:r.prospect.companyName,contactName:r.prospect.contactName}) }).then(r=>r.json());
+  r.status = res.success ? 'sent' : 'failed';
+  if (!res.success) r.email.error = res.error;
+  renderPreviews();
+}
+
+// ===== Send All =====
+document.getElementById('btn-send').addEventListener('click', async () => {
+  if (!confirm('Send emails to '+getFilteredProspects().length+' prospects? (up to batch size)')) return;
+  const filtered = getFilteredProspects();
+  const batchSize = parseInt(document.getElementById('batch-size').value)||10;
+  const delay = (parseInt(document.getElementById('delay').value)||15)*1000;
+  const instructions = document.getElementById('instructions').value;
+  document.getElementById('btn-send').style.display='none'; document.getElementById('btn-preview').style.display='none'; document.getElementById('btn-stop').style.display='inline-block'; document.getElementById('progress-section').classList.add('active');
+  await fetch(API+'/api/send', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({prospects:filtered,instructions,batchSize,delay}) });
+  const poll = setInterval(async()=>{
+    const s = await fetch(API+'/api/status').then(r=>r.json());
+    const total=s.total||1, done=s.sent+s.failed+s.skipped;
+    document.getElementById('progress-fill').style.width=Math.round((done/total)*100)+'%';
+    document.getElementById('progress-current').textContent=s.current||s.phase;
+    document.getElementById('stat-sent').textContent=s.sent; document.getElementById('stat-failed').textContent=s.failed; document.getElementById('stat-skipped').textContent=s.skipped;
+    if(!s.isRunning){clearInterval(poll); document.getElementById('btn-send').style.display='inline-block'; document.getElementById('btn-preview').style.display='inline-block'; document.getElementById('btn-stop').style.display='none'; document.getElementById('progress-current').textContent=s.phase+' \u2014 '+s.sent+' sent, '+s.failed+' failed'; document.getElementById('progress-fill').style.background='var(--success)';}
+  }, 2000);
+});
+document.getElementById('btn-stop').addEventListener('click', async()=>{ previewAbort = true; await fetch(API+'/api/stop',{method:'POST'}); document.getElementById('btn-stop').textContent='Stopping...'; document.getElementById('btn-stop').disabled=true; });
+
+// ===== Presets =====
+async function loadPresets() {
+  const res = await fetch(API+'/api/presets').then(r=>r.json());
+  const sel = document.getElementById('preset-select');
+  sel.innerHTML = '<option value="">-- Saved presets --</option><option value="__default__">Default template</option>';
+  res.presets.forEach(p => { sel.innerHTML += '<option value="'+escAttr(p.name)+'">'+esc(p.name)+'</option>'; });
+}
+document.getElementById('preset-select').addEventListener('change', async(e)=>{
+  const name=e.target.value; const del=document.getElementById('btn-delete-preset');
+  if(!name){del.style.display='none';return;} if(name==='__default__'){document.getElementById('instructions').value=defaultInstructions();del.style.display='none';return;}
+  const res=await fetch(API+'/api/load-preset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name})}).then(r=>r.json());
+  if(res.success){document.getElementById('instructions').value=res.instructions;del.style.display='inline-block';}
+});
+async function savePreset(){const i=document.getElementById('instructions').value;if(!i.trim())return;const n=prompt('Name this preset:');if(!n||!n.trim())return;await fetch(API+'/api/save-preset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n.trim(),instructions:i})});loadPresets();document.getElementById('preset-select').value=n.trim();document.getElementById('btn-delete-preset').style.display='inline-block';}
+async function deletePreset(){const n=document.getElementById('preset-select').value;if(!n||n==='__default__')return;if(!confirm('Delete preset "'+n+'"?'))return;await fetch(API+'/api/delete-preset',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:n})});document.getElementById('instructions').value=defaultInstructions();document.getElementById('btn-delete-preset').style.display='none';loadPresets();}
+
+// ===== Find Leads =====
+let leadResults = [];
+
+document.getElementById('lead-csv-input').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const text = await file.text();
+  const lines = text.split('\n').slice(1).filter(l => l.trim());
+  const domains = lines.map(l => l.split(',')[0]?.trim().replace(/"/g, '')).filter(d => d && d.includes('.'));
+  document.getElementById('lead-domains').value = domains.join('\n');
+  e.target.value = '';
+});
+
+async function findLeads() {
+  const btn = document.getElementById('btn-find-leads');
+  btn.disabled = true; btn.textContent = 'Searching...';
+  const raw = document.getElementById('lead-domains').value.trim();
+  const domains = raw.split('\n').map(d => d.trim().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/.*/, '')).filter(d => d && d.includes('.'));
+
+  if (domains.length === 0) { alert('Enter at least one domain'); btn.disabled = false; btn.textContent = 'Search Hunter.io'; return; }
+
+  const companies = domains.map(d => ({ domain: d, companyName: '', firstName: '', lastName: '', title: '' }));
+
+  document.getElementById('lead-results-section').style.display = 'block';
+  document.getElementById('lead-results').innerHTML = '<div class="empty-state pulsing">Searching ' + domains.length + ' domains on Hunter.io... ~1 second per domain</div>';
+
+  const res = await fetch(API + '/api/hunter-enrich', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ companies }),
+  }).then(r => r.json());
+
+  if (res.success) {
+    leadResults = res.results;
+    renderLeadResults();
+  } else {
+    document.getElementById('lead-results').innerHTML = '<div class="empty-state">Error: ' + esc(res.error) + '</div>';
+  }
+
+  btn.disabled = false; btn.textContent = 'Search Hunter.io';
+}
+
+function renderLeadResults() {
+  const el = document.getElementById('lead-results');
+  if (leadResults.length === 0) { el.innerHTML = '<div class="empty-state">No results</div>'; return; }
+
+  const found = leadResults.filter(r => r.email);
+  const notFound = leadResults.filter(r => !r.email);
+
+  let html = '<div style="margin-bottom:12px;font-size:11px;color:var(--text-dim);">Found emails for <b style="color:var(--success);">' + found.length + '</b> of ' + leadResults.length + ' companies</div>';
+
+  html += '<table class="log-table"><thead><tr><th>Domain</th><th>Contact</th><th>Title</th><th>Email</th><th>Score</th><th>Status</th></tr></thead><tbody>';
+  for (const r of leadResults) {
+    const statusCls = r.status === 'verified' ? 'sent' : r.email ? 'preview' : 'failed';
+    const statusLabel = r.status === 'verified' ? 'VERIFIED' : r.status === 'unverified' ? 'UNVERIFIED' : 'NOT FOUND';
+    html += '<tr>';
+    html += '<td>' + esc(r.domain) + '</td>';
+    html += '<td>' + esc(r.contactName || '-') + '</td>';
+    html += '<td>' + esc(r.title || '-') + '</td>';
+    html += '<td>' + (r.email ? esc(r.email) : '<span style="color:var(--text-dim);">-</span>') + '</td>';
+    html += '<td>' + (r.score || '-') + '</td>';
+    html += '<td><span class="log-status ' + statusCls + '">' + statusLabel + '</span></td>';
+    html += '</tr>';
+  }
+  html += '</tbody></table>';
+
+  el.innerHTML = html;
+}
+
+function sendLeadsToOutreach() {
+  const found = leadResults.filter(r => r.email);
+  if (found.length === 0) { alert('No emails found to send'); return; }
+  // Build CSV text and trigger upload to outreach tab
+  const csvHeader = 'email,company_name,website,contact_name,contact_title,vertical,pain_point,difficulty_score,region';
+  const csvRows = found.map(r => [r.email, r.companyName || r.domain, r.domain, r.contactName, r.title || 'Owner', 'Aerial Survey', '', '2', ''].map(f => { const s = String(f||''); return s.includes(',') ? '"'+s+'"' : s; }).join(','));
+  const csvText = csvHeader + '\n' + csvRows.join('\n');
+
+  // Upload to parse-csv endpoint
+  fetch(API + '/api/parse-csv', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ csvText, fileName: 'hunter-leads.csv' }),
+  }).then(r => r.json()).then(res => {
+    if (res.success) {
+      prospects = res.prospects;
+      document.getElementById('upload-zone').classList.add('has-file');
+      document.getElementById('upload-text').innerHTML = '<strong>hunter-leads.csv</strong> (from Find Leads)';
+      document.getElementById('file-info').style.display = 'flex';
+      document.getElementById('lead-count').textContent = res.count;
+      document.getElementById('btn-preview').disabled = false;
+      document.getElementById('btn-send').disabled = false;
+      switchTab('outreach');
+    }
+  });
+}
+
+function downloadLeadCSV() {
+  const found = leadResults.filter(r => r.email);
+  if (found.length === 0) { alert('No emails to download'); return; }
+  const header = 'email,company_name,website,contact_name,contact_title,score,status';
+  const rows = found.map(r => [r.email, r.companyName || r.domain, r.domain, r.contactName, r.title, r.score, r.status].map(f => { const s=String(f||''); return s.includes(',') ? '"'+s+'"' : s; }).join(','));
+  const blob = new Blob([header + '\n' + rows.join('\n')], { type: 'text/csv' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'hunter-leads-' + new Date().toISOString().split('T')[0] + '.csv';
+  a.click();
+}
+
+// ===== Analytics =====
+async function loadAnalytics() {
+  const data = await fetch(API + '/api/analytics').then(r => r.json());
+
+  // KPIs
+  document.getElementById('kpi-total').textContent = data.totals.total;
+  document.getElementById('kpi-sent').textContent = data.totals.sent;
+  document.getElementById('kpi-failed').textContent = data.totals.failed;
+  document.getElementById('kpi-rate').textContent = data.totals.rate + '%';
+  document.getElementById('kpi-opened').textContent = data.totals.opened || 0;
+  document.getElementById('kpi-replied').textContent = data.totals.replied || 0;
+
+  // Funnel
+  const funnel = document.getElementById('funnel');
+  const t = data.totals;
+  const openPct = t.sent > 0 ? Math.round(((t.opened||0) / t.sent) * 100) : 0;
+  const replyPct = t.sent > 0 ? Math.round(((t.replied||0) / t.sent) * 100) : 0;
+  funnel.innerHTML = `
+    <div class="funnel-stage" style="flex:3;background:rgba(200,200,200,0.05);border:1px solid var(--border);border-radius:4px 0 0 4px;">
+      <div class="funnel-value" style="color:var(--text);">${t.sent}</div>
+      <div class="funnel-label">Delivered</div>
+    </div>
+    <div class="funnel-stage" style="flex:${Math.max(openPct/100*3,0.5)};background:rgba(0,200,120,0.08);border:1px solid rgba(0,200,120,0.2);">
+      <div class="funnel-value" style="color:var(--success);">${t.opened||0}</div>
+      <div class="funnel-label">Opened</div>
+      <div class="funnel-pct" style="color:var(--success);">${openPct}%</div>
+    </div>
+    <div class="funnel-stage" style="flex:${Math.max(replyPct/100*3,0.4)};background:rgba(0,184,255,0.08);border:1px solid rgba(0,184,255,0.2);border-radius:0 4px 4px 0;">
+      <div class="funnel-value" style="color:var(--accent2);">${t.replied||0}</div>
+      <div class="funnel-label">Replied</div>
+      <div class="funnel-pct" style="color:var(--accent2);">${replyPct}%</div>
+    </div>
+  `;
+
+  // Daily chart
+  const chart = document.getElementById('daily-chart');
+  const days = data.days.slice(0, 14).reverse();
+  if (days.length === 0) {
+    chart.innerHTML = '<div style="width:100%;text-align:center;color:var(--text-dim);font-size:11px;align-self:center;">No data yet</div>';
+  } else {
+    const maxVal = Math.max(...days.map(d => d.total), 1);
+    chart.innerHTML = days.map(d => {
+      const sentH = Math.round((d.sent / maxVal) * 100);
+      const failH = Math.round((d.failed / maxVal) * 100);
+      return `<div class="bar-group"><div class="bar-count">${d.total}</div><div class="bar-stack" style="height:100px;"><div class="bar sent" style="height:${sentH}px;" title="${d.sent} sent"></div>${d.failed>0?`<div class="bar failed" style="height:${failH}px;" title="${d.failed} failed"></div>`:''}</div><div class="bar-label">${d.date.slice(5)}</div></div>`;
+    }).join('');
+  }
+
+  // Tracking table (opens/replies per email)
+  const trackBody = document.getElementById('tracking-body');
+  const trackEmpty = document.getElementById('tracking-empty');
+  const tracking = data.tracking || [];
+  if (tracking.length === 0) {
+    trackBody.innerHTML = ''; trackEmpty.style.display = 'block';
+  } else {
+    trackEmpty.style.display = 'none';
+    trackBody.innerHTML = tracking.map(t => {
+      const sentTime = t.sentAt ? new Date(t.sentAt).toLocaleDateString() : '-';
+      const openCount = (t.opens||[]).length;
+      const lastOpen = openCount > 0 ? new Date(t.opens[t.opens.length-1]).toLocaleString() : '';
+      const openBadge = openCount > 0
+        ? `<span class="log-status sent">${openCount}x</span> <span style="font-size:9px;color:var(--text-dim);">${lastOpen}</span>`
+        : '<span style="color:var(--text-dim);font-size:10px;">\u2014</span>';
+      const replyBadge = t.replied
+        ? `<span class="log-status sent">YES</span> <span style="font-size:9px;color:var(--text-dim);">${t.repliedAt ? new Date(t.repliedAt).toLocaleString() : ''}</span>`
+        : '<span style="color:var(--text-dim);font-size:10px;">\u2014</span>';
+      return `<tr>
+        <td>${sentTime}</td>
+        <td>${esc(t.email)}</td>
+        <td>${esc(t.company)}</td>
+        <td title="${escAttr(t.subject)}">${esc(t.subject)}</td>
+        <td>${openBadge}</td>
+        <td>${replyBadge}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Companies
+  const compList = document.getElementById('company-list');
+  if (data.companies.length === 0) {
+    compList.innerHTML = '<div class="empty-state" style="grid-column:1/-1;">No companies contacted yet</div>';
+  } else {
+    compList.innerHTML = data.companies.slice(0, 20).map(c =>
+      `<div class="company-row"><span class="name">${esc(c.name)}</span><span class="stats"><span style="color:var(--success);">${c.sent} sent</span>${c.failed>0?`<span style="color:var(--danger);">${c.failed} failed</span>`:''}</span></div>`
+    ).join('');
+  }
+
+  // Send log
+  const logBody = document.getElementById('log-body');
+  const logEmpty = document.getElementById('log-empty');
+  if (data.recent.length === 0) {
+    logBody.innerHTML = ''; logEmpty.style.display = 'block';
+  } else {
+    logEmpty.style.display = 'none';
+    logBody.innerHTML = data.recent.map(r => {
+      const time = r.timestamp ? new Date(r.timestamp).toLocaleString() : '-';
+      return `<tr><td>${esc(time)}</td><td>${esc(r.email)}</td><td>${esc(r.company)}</td><td title="${escAttr(r.subject)}">${esc(r.subject)}</td><td><span class="log-status ${r.status}">${(r.status||'').toUpperCase()}</span></td></tr>`;
+    }).join('');
+  }
+}
+
+async function checkReplies() {
+  const btn = document.getElementById('btn-check-replies');
+  btn.disabled = true; btn.textContent = 'Checking...';
+  const res = await fetch(API + '/api/check-replies', { method: 'POST' }).then(r => r.json());
+  if (res.success) {
+    btn.textContent = res.newReplies > 0 ? res.newReplies + ' new replies!' : 'No new replies';
+    loadAnalytics();
+  } else {
+    btn.textContent = 'Error: ' + (res.error || 'unknown');
+  }
+  setTimeout(() => { btn.disabled = false; btn.textContent = 'Check Replies'; }, 3000);
+}
+
+// ===== Scheduling =====
+function toLocalInput(isoStr) {
+  const d = new Date(isoStr);
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function startScheduling(i) { previewResults[i].scheduling = true; renderPreviews(); }
+function cancelScheduling(i) { previewResults[i].scheduling = false; renderPreviews(); }
+
+async function confirmSchedule(i) {
+  const r = previewResults[i];
+  const input = document.getElementById('sched-time-'+i);
+  if (!input || !input.value) { alert('Pick a date and time.'); return; }
+  const scheduledAt = new Date(input.value).toISOString();
+  const res = await fetch(API+'/api/schedule-one', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ prospect: r.prospect, email: { subject: r.email.subject, body: r.email.body }, scheduledAt })
+  }).then(r => r.json());
+  if (res.success) { r.status = 'scheduled'; r.scheduling = false; }
+  else { alert('Failed: ' + (res.error || 'unknown')); }
+  renderPreviews();
+}
+
+async function scheduleAll() {
+  const ready = previewResults.filter(r => r.status === 'preview' && r.email && r.email.subject);
+  if (ready.length === 0) { alert('No previewed emails to schedule.'); return; }
+  if (!confirm('Schedule ' + ready.length + ' emails at their suggested times?')) return;
+  const items = ready.map(r => ({
+    prospect: r.prospect,
+    email: { subject: r.email.subject, body: r.email.body },
+    scheduledAt: r.suggestedTime ? r.suggestedTime.suggestedUTC : null,
+  }));
+  const res = await fetch(API+'/api/schedule-batch', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ items })
+  }).then(r => r.json());
+  if (res.success) {
+    ready.forEach(r => { r.status = 'scheduled'; r.scheduling = false; });
+    renderPreviews();
+  } else { alert('Failed: ' + (res.error || 'unknown')); }
+}
+
+let schedRefresh = null;
+async function loadSchedules() {
+  const res = await fetch(API+'/api/schedules').then(r => r.json());
+  const scheds = res.schedules || [];
+  const pending = scheds.filter(s => s.status === 'pending');
+  const sent = scheds.filter(s => s.status === 'sent');
+  const cancelled = scheds.filter(s => s.status === 'cancelled');
+  document.getElementById('sched-pending').textContent = pending.length;
+  document.getElementById('sched-sent').textContent = sent.length;
+  document.getElementById('sched-cancelled').textContent = cancelled.length;
+
+  const body = document.getElementById('schedule-body');
+  const empty = document.getElementById('schedule-empty');
+  if (scheds.length === 0) {
+    body.innerHTML = ''; empty.style.display = 'block';
+    document.getElementById('schedule-table').style.display = 'none';
+  } else {
+    empty.style.display = 'none';
+    document.getElementById('schedule-table').style.display = '';
+    body.innerHTML = scheds.filter(s => s.status !== 'cancelled' || Date.now() - new Date(s.sentAt || s.createdAt).getTime() < 7*86400000)
+      .sort((a, b) => new Date(a.scheduledAt) - new Date(b.scheduledAt))
+      .map(s => {
+      const schedTime = new Date(s.scheduledAt).toLocaleString();
+      const statusCls = s.status === 'sent' ? 'sent' : s.status === 'pending' ? 'pending' : s.status === 'failed' ? 'failed' : 'cancelled';
+      let countdownHtml = '';
+      if (s.status === 'pending' && s.msUntil > 0) {
+        const h = Math.floor(s.msUntil / 3600000);
+        const m = Math.floor((s.msUntil % 3600000) / 60000);
+        countdownHtml = `<span class="countdown">${h}h ${m}m</span>`;
+      }
+      const cancelBtn = s.status === 'pending' ? `<button class="btn btn-sm btn-stop" onclick="cancelScheduleUI('${s.id}')">Cancel</button>` : '';
+      return `<tr>
+        <td>${esc(s.prospect.companyName)}</td>
+        <td title="${escAttr(s.prospect.email)}">${esc(s.prospect.contactName || s.prospect.email)}</td>
+        <td title="${escAttr(s.email.subject)}">${esc(s.email.subject)}</td>
+        <td>${schedTime}<br>${s.localTime ? '<span style="font-size:9px;color:var(--text-dim);">'+esc(s.localTime)+' local</span>' : ''}${countdownHtml ? '<br>'+countdownHtml : ''}</td>
+        <td><span class="log-status ${statusCls}">${s.status.toUpperCase()}</span>${s.error ? '<br><span style="font-size:9px;color:var(--danger);">'+esc(s.error)+'</span>' : ''}</td>
+        <td>${cancelBtn}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Auto-refresh every 30s while on the scheduled tab
+  if (schedRefresh) clearInterval(schedRefresh);
+  schedRefresh = setInterval(() => {
+    if (document.getElementById('tab-scheduled').classList.contains('active')) loadSchedules();
+    else clearInterval(schedRefresh);
+  }, 30000);
+}
+
+async function cancelScheduleUI(id) {
+  if (!confirm('Cancel this scheduled email?')) return;
+  await fetch(API+'/api/cancel-schedule', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ id }) });
+  loadSchedules();
+}
+
+// ===== Settings =====
+async function loadSettingsUI() {
+  try {
+    const s = await fetch(API + '/api/settings').then(r => r.json());
+    document.getElementById('set-name').value = s.senderName || '';
+    document.getElementById('set-title').value = s.senderTitle || '';
+    document.getElementById('set-company').value = s.companyName || '';
+    document.getElementById('set-website').value = s.companyWebsite || '';
+    document.getElementById('set-email').value = s.senderEmail || '';
+    document.getElementById('set-calendly').value = s.calendlyLink || '';
+    document.getElementById('set-location').value = s.location || '';
+    document.getElementById('set-context').value = s.companyContext || '';
+    document.getElementById('set-llm-provider').value = s.llmProvider || 'claude';
+    document.getElementById('set-llm-key').value = '';
+    document.getElementById('set-llm-key').placeholder = s.llmApiKey || 'Enter API key';
+    document.getElementById('set-llm-model').value = s.llmModel || '';
+    document.getElementById('set-hunter-key').value = '';
+    document.getElementById('set-hunter-key').placeholder = s.hunterApiKey || 'Enter API key';
+    document.getElementById('set-daily-limit').value = s.dailyLimit || 2000;
+    document.getElementById('set-delay').value = s.defaultDelayMs || 15000;
+    document.getElementById('set-batch').value = s.defaultBatchSize || 50;
+    document.getElementById('set-email-instructions').value = s.emailInstructions || '';
+  } catch {}
+}
+
+async function saveAllSettings() {
+  const updates = {
+    senderName: document.getElementById('set-name').value,
+    senderTitle: document.getElementById('set-title').value,
+    companyName: document.getElementById('set-company').value,
+    companyWebsite: document.getElementById('set-website').value,
+    senderEmail: document.getElementById('set-email').value,
+    calendlyLink: document.getElementById('set-calendly').value,
+    location: document.getElementById('set-location').value,
+    companyContext: document.getElementById('set-context').value,
+    llmProvider: document.getElementById('set-llm-provider').value,
+    llmModel: document.getElementById('set-llm-model').value,
+    dailyLimit: parseInt(document.getElementById('set-daily-limit').value) || 2000,
+    defaultDelayMs: parseInt(document.getElementById('set-delay').value) || 15000,
+    defaultBatchSize: parseInt(document.getElementById('set-batch').value) || 50,
+    emailInstructions: document.getElementById('set-email-instructions').value,
+  };
+  // Only update API keys if user typed a new value (not placeholder)
+  const llmKey = document.getElementById('set-llm-key').value;
+  if (llmKey && !llmKey.includes('...')) updates.llmApiKey = llmKey;
+  const hunterKey = document.getElementById('set-hunter-key').value;
+  if (hunterKey && !hunterKey.includes('...')) updates.hunterApiKey = hunterKey;
+
+  const res = await fetch(API + '/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(updates) }).then(r => r.json());
+  const el = document.getElementById('settings-save-status');
+  if (res.success) {
+    el.style.color = 'var(--success)'; el.textContent = 'Saved!';
+    // Refresh instructions on outreach tab
+    document.getElementById('instructions').value = await defaultInstructions();
+  } else {
+    el.style.color = 'var(--danger)'; el.textContent = 'Error: ' + res.error;
+  }
+  setTimeout(() => { el.textContent = ''; }, 3000);
+}
+
+async function testLLM() {
+  const el = document.getElementById('llm-test-result');
+  el.style.color = 'var(--text-dim)'; el.textContent = 'Testing...';
+  // Save keys first if entered
+  const llmKey = document.getElementById('set-llm-key').value;
+  if (llmKey && !llmKey.includes('...')) {
+    await fetch(API + '/api/settings', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ llmApiKey: llmKey, llmProvider: document.getElementById('set-llm-provider').value }) });
+  }
+  const res = await fetch(API + '/api/test-llm', { method: 'POST' }).then(r => r.json());
+  if (res.success) { el.style.color = 'var(--success)'; el.textContent = 'Connected! (' + res.tokens + ' tokens)'; }
+  else { el.style.color = 'var(--danger)'; el.textContent = res.error; }
+}
+
+// ===== Helpers =====
+function esc(str) { const d = document.createElement('div'); d.textContent = String(str||''); return d.innerHTML; }
+function escAttr(str) { return String(str||'').replace(/"/g, '&quot;').replace(/</g, '&lt;'); }
+
+init();
+</script>
+</body>
+</html>

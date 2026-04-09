@@ -1,0 +1,14 @@
+node_modules/
+credentials.json
+outlook-credentials.json
+token.json
+outlook-token.json
+settings.json
+tracking.json
+schedules.json
+presets.json
+followup-sent.json
+clean-followup-list.json
+*.log
+logs/
+drafts/

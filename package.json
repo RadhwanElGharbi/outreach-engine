@@ -1,0 +1,17 @@
+{
+  "name": "outreach-engine",
+  "version": "1.0.0",
+  "description": "Open-source AI-powered cold email outreach engine. Scrapes websites, generates personalized emails via any LLM (Claude, GPT, Gemini), sends via Gmail or Outlook, tracks opens and replies.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "auth": "node auth.js"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "csv-parse": "^5.6.0",
+    "googleapis": "^144.0.0",
+    "@azure/msal-node": "^2.16.0"
+  },
+  "license": "MIT"
+}
