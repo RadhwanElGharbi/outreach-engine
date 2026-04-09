@@ -5,7 +5,7 @@ const logger = require('./logger');
 const { sendEmail } = require('./gmail-sender');
 const { getAuthenticatedClient } = require('./auth');
 
-const BROCHURE_PATH = path.join(__dirname, '..', 'brochure', 'Colony Dynamics - Brochure.pdf');
+const BROCHURE_PATH = path.join(__dirname, '..', 'brochure', 'brochure.pdf');
 const CLEAN_LIST_PATH = path.join(__dirname, 'clean-followup-list.json');
 const SENT_TRACKER_PATH = path.join(__dirname, 'followup-sent.json');
 
@@ -29,7 +29,7 @@ async function main() {
 
   // Load brochure
   const brochureData = fs.readFileSync(BROCHURE_PATH).toString('base64');
-  const attachment = { fileName: 'Colony Dynamics - Brochure.pdf', mimeType: 'application/pdf', base64Data: brochureData };
+  const attachment = { fileName: 'brochure.pdf', mimeType: 'application/pdf', base64Data: brochureData };
 
   // Load clean list
   const fullList = JSON.parse(fs.readFileSync(CLEAN_LIST_PATH, 'utf8'));
@@ -40,7 +40,7 @@ async function main() {
   // Filter out already sent
   const remaining = fullList.filter(r => !alreadySent.has(r.email));
 
-  console.log(`\n=== Colony Follow-Up (Clean) ===`);
+  console.log(`\n=== Follow-Up (Clean) ===`);
   console.log(`Clean list:        ${fullList.length}`);
   console.log(`Already sent:      ${alreadySent.size}`);
   console.log(`Remaining:         ${remaining.length}`);

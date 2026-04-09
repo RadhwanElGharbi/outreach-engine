@@ -4,7 +4,7 @@ const config = require('./config');
 const logger = require('./logger');
 
 // ---------------------------------------------------------------------------
-// Timezone offset map (UTC hours). Covers Colony's target markets.
+// Timezone offset map (UTC hours). Common timezone offsets.
 // DST is ignored — ±1 hr is acceptable for cold email timing.
 // ---------------------------------------------------------------------------
 const STATE_OFFSETS = {
@@ -122,7 +122,7 @@ function resolveTimezoneOffset(prospect) {
     }
   }
 
-  // 5. Default: US Eastern (Colony's primary market is North American infrastructure)
+  // 5. Default: US Eastern (default timezone)
   return { offset: -5, source: 'default (US Eastern)' };
 }
 

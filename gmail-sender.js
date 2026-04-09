@@ -22,7 +22,7 @@ function encodeSubject(subject) {
 }
 
 function buildMimeMessage({ to, subject, body, fromName, fromEmail, attachments, trackingId }) {
-  const boundary = 'colony_boundary_' + Date.now();
+  const boundary = 'outreach_boundary_' + Date.now();
   const hasAttachments = attachments && attachments.length > 0;
   const encodedSubject = encodeSubject(subject);
 

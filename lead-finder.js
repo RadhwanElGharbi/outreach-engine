@@ -8,7 +8,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env'), overr
 const HUNTER_API_KEY = process.env.HUNTERIO_API_KEY;
 const HUNTER_BASE = 'https://api.hunter.io/v2';
 
-// Target titles for Colony's buyers
+// Target titles for your buyers
 const TARGET_TITLES = [
   'owner', 'founder', 'ceo', 'president', 'cto', 'chief',
   'director of operations', 'vp operations', 'director of survey',

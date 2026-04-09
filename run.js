@@ -59,7 +59,7 @@ function parseArgs() {
 
 function printHelp() {
   console.log(`
-Colony Outreach Engine — Automated Email Outreach
+Outreach Engine — Automated Email Outreach
 
 Usage:
   node run.js --csv <path> [options]
@@ -92,7 +92,7 @@ Examples:
 async function main() {
   const opts = parseArgs();
 
-  console.log('\n=== Colony Outreach Engine ===\n');
+  console.log('\n=== Outreach Engine ===\n');
   console.log(`CSV:         ${opts.csv}`);
   console.log(`Mode:        ${opts.dryRun ? 'DRY RUN (no emails sent)' : 'LIVE SEND'}`);
   console.log(`Batch size:  ${opts.batchSize}`);

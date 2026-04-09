@@ -10,7 +10,7 @@ const COLUMN_ALIASES = {
   contactLastName: ['last_name', 'surname'],
   contactTitle:    ['contact_title', 'title', 'job_title', 'target_title', 'position'],
   vertical:        ['vertical', 'industry', 'sector', 'category'],
-  painPoint:       ['pain_point', 'description', 'why_they_need_colony', 'notes'],
+  painPoint:       ['pain_point', 'description', 'why_they_need_us', 'notes'],
   difficultyScore: ['difficulty_score', 'acquisition_difficulty', 'score', 'difficulty'],
   region:          ['region', 'location', 'hq', 'headquarters'],
   country:         ['country'],

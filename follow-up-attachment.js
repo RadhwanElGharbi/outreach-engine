@@ -5,7 +5,7 @@ const logger = require('./logger');
 const { sendEmail } = require('./gmail-sender');
 const { getAuthenticatedClient } = require('./auth');
 
-const BROCHURE_PATH = path.join(__dirname, '..', 'brochure', 'Colony Dynamics - Brochure.pdf');
+const BROCHURE_PATH = path.join(__dirname, '..', 'brochure', 'brochure.pdf');
 const FOLLOW_UP_BODY = `Forgot to attach this — here's our brochure with the full specs on Trinity and Pathfinder.
 
 Rad`;
@@ -21,7 +21,7 @@ async function main() {
   // Load brochure as base64
   const brochureData = fs.readFileSync(BROCHURE_PATH).toString('base64');
   const attachment = {
-    fileName: 'Colony Dynamics - Brochure.pdf',
+    fileName: 'brochure.pdf',
     mimeType: 'application/pdf',
     base64Data: brochureData,
   };
@@ -46,8 +46,8 @@ async function main() {
       const [, email, company, contactName, subject, status] = fields;
       // Skip test emails, manual sends, and already-replied contacts
       const EXCLUDE = [
-        'rad@colony.tech',
-        'radwan@agrsglobal.com',
+        'your@email.com',
+        'old@email.com',
         'mark@extremeaerialproductions.com',  // already in active conversation
         'achal@flytbase.com',                 // already replied
       ];
@@ -105,7 +105,7 @@ async function main() {
       console.log(`  ${email} (${company})`);
       console.log(`    Subject: ${FOLLOW_UP_SUBJECT_PREFIX}${subject}`);
       console.log(`    Body: ${FOLLOW_UP_BODY.split('\n')[0]}`);
-      console.log(`    Attachment: Colony Dynamics - Brochure.pdf\n`);
+      console.log(`    Attachment: brochure.pdf\n`);
       i++;
     }
     console.log(`\nTotal: ${Math.min(sentEmails.size, batchSize)} follow-ups ready.`);
